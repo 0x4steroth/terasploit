@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+"""
+Terasploit framework console entry point.
+
+Provides the core logic for initializing the console system and
+managing command dispatching within the Tera framework.
+
+Author:          4steroth
+License:         BSD-3-Clause
+Path:            teraconsole
+Reference:       N/A
+MSF Reference:   msfconsole
+"""
+
+import sys
+from pathlib import Path
+
+
+# Never write __pycache__ into the source tree.
+sys.dont_write_bytecode = True
+
+# Ensure the framework root is on sys.path whether this runs as a
+# direct script or via the pip-generated console_scripts shim.
+ROOT = str(Path(__file__).resolve().parent)
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+
+def main() -> None:
+    """Entry point for installers and direct script execution."""
+    try:
+        from teralibs.terasploit.framework.console.tsf import main as terasploit_console
+
+        # Start terasploit framework console
+        terasploit_console()
+
+    except KeyboardInterrupt:
+        # Gracefully handle Ctrl+C at the top level to avoid raw tracebacks
+        print("\n[*] Interrupted, quitting Terasploit framework console...")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

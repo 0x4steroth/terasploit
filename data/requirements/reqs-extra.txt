@@ -1,0 +1,12 @@
+# Terasploit Framework — Optional / Extra Requirements
+#
+# These packages are NOT required to start the framework.  Each is
+# loaded lazily; the framework raises ImportError with a clear install
+# hint only when you attempt to use the feature that needs it.
+#
+# Install everything:
+#   pip install -r reqs-extra.txt
+
+impacket
+scapy
+paramiko

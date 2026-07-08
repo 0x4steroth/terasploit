@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+"""
+Standalone payload generator.
+
+A self-contained payload generation utility mirroring the msfvenom workflow
+and flag surface. It can generate, encode, badchar-filter, NOP-pad,
+size-constrain, and format shellcode payloads without launching the
+interactive Terasploit console.
+
+Author:          4steroth
+License:         BSD-3-Clause
+Path:            terax
+Reference:       N/A
+MSF Reference:   msfvenom
+"""
+
+import sys
+from pathlib import Path
+
+
+# Never write __pycache__ into the source tree.
+sys.dont_write_bytecode = True
+
+# Ensure the framework root is on sys.path whether this runs as a
+# direct script or via the pip-generated console_scripts shim.
+ROOT = str(Path(__file__).resolve().parent)
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+
+def main() -> None:
+    """Entry point for installers and direct script execution."""
+    try:
+        from teralibs.tsf.terax.generator import main as terax_main
+
+        # Start terax standalone payload generator
+        terax_main()
+
+    except KeyboardInterrupt:
+        # Gracefully handle Ctrl+C at the top level to avoid raw tracebacks
+        print("\n[*] Interrupted, quitting terax payload generator...")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
