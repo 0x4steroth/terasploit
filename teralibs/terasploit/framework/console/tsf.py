@@ -10,17 +10,17 @@ import argparse
 import os
 import sys
 
-from teralibs.terasploit.framework.services.banner import VERSION
 from teralibs.terasploit.framework.services.printf import (
     error,
     info,
     print_line,
     set_verbose,
 )
+from teralibs.terasploit.metadata import VERSION
 
 
 # Argument parser
-class _CompactHelpFormatter(argparse.RawDescriptionHelpFormatter):
+class CompactHelpFormatter(argparse.RawDescriptionHelpFormatter):
     """
     RawDescriptionHelpFormatter with a tighter help-column alignment.
 
@@ -39,7 +39,7 @@ class _CompactHelpFormatter(argparse.RawDescriptionHelpFormatter):
 def _build_parser():
     parser = argparse.ArgumentParser(
         prog="teraconsole",
-        formatter_class=_CompactHelpFormatter,
+        formatter_class=CompactHelpFormatter,
     )
 
     parser.add_argument(
@@ -123,45 +123,54 @@ def _run_inline(console, command_string):
 # Entry point
 def main():
     """The main entry point of terasploit framework"""
-    parser = _build_parser()
-    opts = parser.parse_args()
+    try:
+        parser = _build_parser()
+        opts = parser.parse_args()
 
-    # --version - print and exit immediately, no console init needed.
-    if opts.version:
-        print_line(f"Terasploit Framework {VERSION}")
+        # --version - print and exit immediately, no console init needed.
+        if opts.version:
+            print_line(f"Terasploit Framework {VERSION}")
+            sys.exit(0)
+
+        # Apply debug flag first so banner / dep-check log at the right level.
+        if opts.debug:
+            set_verbose(True)
+
+        # --quiet: patch banner + dep-report BEFORE importing CLi (its __init__
+        # triggers both).  Importing the modules here loads them into sys.modules
+        # so the lambda replacements take effect before CLi.__init__ runs.
+        if opts.quiet:
+            import teralibs.terasploit.dependencies as _dep_mod
+            import teralibs.terasploit.framework.services.banner as _banner_mod
+
+            _banner_mod.display_banner = lambda _: None
+            _dep_mod.DependencyReport.print_report = lambda self: None
+
+        # Import CLi after quiet patches are applied.
+        from teralibs.terasploit.framework.console.cli import CLi
+
+        # Initialise the console - runs banner + dep check internally.
+        console = CLi(verbose=opts.debug)
+
+        # --module: preload a module before handing control to the user.
+        if opts.module:
+            console.dispatch("use", [opts.module])
+
+        # --execute: run inline commands.
+        if opts.execute:
+            _run_inline(console, opts.execute)
+
+        # --resource: run a script file.
+        if opts.resource:
+            _run_resource(console, opts.resource)
+
+        # Drop into the interactive REPL.
+        console.start()
+
+    except KeyboardInterrupt:
+        print_line("\n[!] Keyboard interrupt received, exiting...")
         sys.exit(0)
 
-    # Apply debug flag first so banner / dep-check log at the right level.
-    if opts.debug:
-        set_verbose(True)
-
-    # --quiet: patch banner + dep-report BEFORE importing CLi (its __init__
-    # triggers both).  Importing the modules here loads them into sys.modules
-    # so the lambda replacements take effect before CLi.__init__ runs.
-    if opts.quiet:
-        import teralibs.terasploit.dependencies as _dep_mod
-        import teralibs.terasploit.framework.services.banner as _banner_mod
-
-        _banner_mod.display_banner = lambda _: None
-        _dep_mod.DependencyReport.print_report = lambda self: None
-
-    # Import CLi after quiet patches are applied.
-    from teralibs.terasploit.framework.console.cli import CLi
-
-    # Initialise the console - runs banner + dep check internally.
-    console = CLi(verbose=opts.debug)
-
-    # --module: preload a module before handing control to the user.
-    if opts.module:
-        console.dispatch("use", [opts.module])
-
-    # --execute: run inline commands.
-    if opts.execute:
-        _run_inline(console, opts.execute)
-
-    # --resource: run a script file.
-    if opts.resource:
-        _run_resource(console, opts.resource)
-
-    # Drop into the interactive REPL.
-    console.start()
+    except Exception as exc:
+        error(f"Unexpected error: {exc}")
+        sys.exit(1)
