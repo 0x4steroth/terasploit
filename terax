@@ -11,8 +11,6 @@ interactive Terasploit console.
 Author:          4steroth
 License:         BSD-3-Clause
 Path:            terax
-Reference:       N/A
-MSF Reference:   msfvenom
 """
 
 import sys
