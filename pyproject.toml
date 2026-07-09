@@ -14,7 +14,7 @@ packages = ["teralibs"]
 # ==============================================================================
 [project]
 name = "terasploit-framework"
-version = "1.0.0-dev"
+version = "1.0.0"
 description = "Advanced modular exploitation framework."
 readme = "README.md"
 requires-python = ">=3.13"
