@@ -9,8 +9,6 @@ managing command dispatching within the Tera framework.
 Author:          4steroth
 License:         BSD-3-Clause
 Path:            teraconsole
-Reference:       N/A
-MSF Reference:   msfconsole
 """
 
 import sys
